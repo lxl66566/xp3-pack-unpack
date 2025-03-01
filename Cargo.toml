@@ -1,0 +1,19 @@
+[package]
+name = "xp3-audio-speedup"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+anyhow = "1.0"
+tempfile = "3.8"
+walkdir = "2.4"
+xp3 = "0.3.0"
+assert2 = "0.3.15"
+rayon = "1.10.0"
+
+[profile.release]
+lto = true
+opt-level = "z"
+panic = "abort"
+strip = true
