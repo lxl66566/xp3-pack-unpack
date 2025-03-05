@@ -29,14 +29,21 @@ struct Cli {
     /// 仅加速，不进行打包
     #[arg(short, long)]
     nopack: bool,
+
+    /// 指定匹配音频文件的后缀
+    #[arg(long, default_values = ["ogg"])]
+    suffix: Vec<String>,
 }
 
-fn process_audio_files(folder: &Path, speed: f32) -> Result<()> {
+fn process_audio_files(folder: &Path, speed: f32, suffix: &[String]) -> Result<()> {
     // 首先收集所有需要处理的文件路径
     let files: Vec<_> = WalkDir::new(folder)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().and_then(|ext| ext.to_str()) == Some("ogg"))
+        .filter(|e| {
+            let ext = e.path().extension().and_then(|ext| ext.to_str());
+            suffix.iter().any(|s| ext == Some(s))
+        })
         .collect();
 
     // 并行处理所有文件
@@ -77,7 +84,7 @@ fn process_audio_files(folder: &Path, speed: f32) -> Result<()> {
 }
 
 /// 处理 XP3 文件（或包含音频文件的文件夹）
-fn process_xp3(input_path: &Path, speed: f32, no_pack: bool) -> Result<()> {
+fn process_xp3(input_path: &Path, speed: f32, no_pack: bool, suffix: &[String]) -> Result<()> {
     println!("正在处理: {}", input_path.display());
 
     let temp_dir = TempDir::new()?;
@@ -109,7 +116,7 @@ fn process_xp3(input_path: &Path, speed: f32, no_pack: bool) -> Result<()> {
 
     // 处理音频文件
     println!("正在处理音频文件...");
-    process_audio_files(which_dir, speed)?;
+    process_audio_files(which_dir, speed, suffix)?;
 
     if no_pack {
         println!("音频处理完成，未进行打包");
@@ -194,7 +201,13 @@ fn main() -> Result<()> {
 
     assert!(args.input.exists(), "请指定存在的文件/文件夹");
 
-    process_xp3(Path::new(&args.input), args.speed, args.nopack).unwrap_or_else(|e| {
+    process_xp3(
+        Path::new(&args.input),
+        args.speed,
+        args.nopack,
+        &args.suffix,
+    )
+    .unwrap_or_else(|e| {
         println!("处理 XP3 文件时出错: {:?}", e);
     });
 
