@@ -1,6 +1,10 @@
-use anyhow::{Context, Result};
+pub mod log_utils;
+
+use anyhow::{Context, Result, anyhow};
 use assert2::assert;
 use clap::Parser;
+use log::{debug, error, info};
+use log_utils::log_init;
 use rayon::prelude::*;
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter};
@@ -54,7 +58,7 @@ fn process_audio_files(folder: &Path, speed: f32, suffix: &[String]) -> Result<(
             path.file_name().unwrap().to_str().unwrap()
         ));
 
-        println!("处理 {}...", path.display());
+        info!("处理 {}...", path.display());
 
         let status = Command::new("ffmpeg")
             .args([
@@ -77,7 +81,7 @@ fn process_audio_files(folder: &Path, speed: f32, suffix: &[String]) -> Result<(
             if output_file.exists() {
                 std::fs::remove_file(output_file)?;
             }
-            println!("处理 {} 时出错", path.display());
+            error!("处理 {} 时出错", path.display());
         }
         Ok(())
     })
@@ -85,7 +89,7 @@ fn process_audio_files(folder: &Path, speed: f32, suffix: &[String]) -> Result<(
 
 /// 处理 XP3 文件（或包含音频文件的文件夹）
 fn process_xp3(input_path: &Path, speed: f32, no_pack: bool, suffix: &[String]) -> Result<()> {
-    println!("正在处理: {}", input_path.display());
+    info!("正在处理: {}", input_path.display());
 
     let temp_dir = TempDir::new()?;
     let temp_path = temp_dir.path();
@@ -95,43 +99,52 @@ fn process_xp3(input_path: &Path, speed: f32, no_pack: bool, suffix: &[String]) 
         input_path
     } else {
         // 解包 XP3
-        println!("正在解包...");
+        info!("正在解包...");
         let input_xp3 = File::open(input_path)?;
         let archive = XP3Reader::open_archive(BufReader::new(input_xp3)).unwrap_or_else(|e| {
             panic!("打开 {} 时出错: {:?}", input_path.display(), e);
         });
 
         for (name, _) in archive.entries() {
-            let path_str = format!("{}/{}", temp_path.display(), name);
-            let path = Path::new(&path_str);
-            fs::create_dir_all(path.parent().unwrap())?;
+            debug!("解压 {}...", name);
+            let path = temp_path.join(name);
+
+            fs::create_dir_all(path.parent().unwrap())
+                .context(format!("创建目录 {:?} 失败", path.parent().unwrap()))?;
+
+            let file = File::create(&path);
+            // 忽略创建文件错误，为什么呢，因为 https://t.me/withabsolutex/2260
+            if let Err(err) = file {
+                error!("创建文件 {:?} 时出错，已跳过此文件: {:?}", path, err);
+                continue;
+            }
 
             archive
-                .unpack(&name.into(), &mut BufWriter::new(File::create(path)?))
-                .unwrap_or_else(|e| panic!("解压 {} 时出错: {:?}", name, e));
+                .unpack(&name.into(), &mut BufWriter::new(file.unwrap()))
+                .map_err(|e| anyhow!("解压 {} 时出错: {:?}", name, e))?;
         }
-        println!("解包完成，解压了 {} 个文件", archive.entries().len());
+        info!("解包完成，解压了 {} 个文件", archive.entries().len());
         temp_path
     };
 
     // 处理音频文件
-    println!("正在处理音频文件...");
+    info!("正在处理音频文件...");
     process_audio_files(which_dir, speed, suffix)?;
 
     if no_pack {
-        println!("音频处理完成，未进行打包");
+        info!("音频处理完成，未进行打包");
         return Ok(());
     }
 
     // 备份原文件
     if input_path.is_file() {
         let backup_path = input_path.with_extension("xp3.bak");
-        println!("备份原文件到: {}", backup_path.display());
+        info!("备份原文件到: {}", backup_path.display());
         std::fs::rename(input_path, &backup_path)?;
     }
 
     // 重新打包
-    println!("正在重新打包...");
+    info!("正在重新打包...");
     let out_path = input_path.with_extension("xp3");
     let out = File::create(&out_path)?;
     let mut writer = XP3Writer::start(
@@ -149,8 +162,8 @@ fn process_xp3(input_path: &Path, speed: f32, no_pack: bool, suffix: &[String]) 
         .finish()
         .unwrap_or_else(|e| panic!("完成打包时出错: {:?}", e));
 
-    println!("完成打包: {}", out_path.display());
-    println!("共打包了 {} 个文件", count);
+    info!("完成打包: {}", out_path.display());
+    info!("共打包了 {} 个文件", count);
     Ok(())
 }
 
@@ -198,8 +211,9 @@ fn add_all_file<T: std::io::Write + std::io::Seek>(
 
 fn main() -> Result<()> {
     let args = Cli::parse();
-
     assert!(args.input.exists(), "请指定存在的文件/文件夹");
+
+    log_init();
 
     process_xp3(
         Path::new(&args.input),
@@ -208,8 +222,10 @@ fn main() -> Result<()> {
         &args.suffix,
     )
     .unwrap_or_else(|e| {
-        println!("处理 XP3 文件时出错: {:?}", e);
+        error!("处理 XP3 文件时出错: {:?}", e);
     });
+
+    info!("处理完成");
 
     Ok(())
 }
