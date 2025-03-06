@@ -4,6 +4,10 @@
 
 该程序也可以用于非 XP3 格式，只需要手动解包后，处理音频文件夹，并设置为 nopack 加速后，再手动封包即可。
 
+## 安装
+
+在 [Releases](https://github.com/lxl66566/xp3-audio-speedup/releases) 页面下载对应平台的可执行文件。（或者使用 cargo-binstall，bpm 等）
+
 ## 使用
 
 ```sh
@@ -13,6 +17,10 @@ xp3-audio-speedup.exe <input_xp3> --speed <speed> [--nopack]
 - `input_xp3` XP3 文件路径或包含音频文件的文件夹路径。如果输入是 xp3 文件，则会进行解包。
 - `--speed` 音频加速倍数
 - `--nopack` 仅加速，不进行打包
+
+如果需要匹配非 `.ogg` 的音频文件后缀，请使用 `--suffix <suffix>` 选项。
+
+更多使用说明，请使用 `xp3-audio-speedup.exe -h` 查看。
 
 ## 注意事项
 
