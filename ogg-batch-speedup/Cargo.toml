@@ -1,0 +1,15 @@
+[package]
+authors     = ["lxl66566 <lxl66566@gmail.com>"]
+categories  = ["multimedia::audio"]
+description = "A library for batch processing and speeding up OGG audio files"
+edition     = "2024"
+keywords    = ["audio", "ogg", "batch", "speedup"]
+license     = "MIT"
+name        = "ogg-batch-speedup"
+repository  = "https://github.com/lxl66566/xp3-audio-speedup/tree/main/ogg-batch-speedup"
+version     = "0.1.0"
+
+[dependencies]
+log     = "0.4"
+rayon   = "1.8"
+walkdir = "2.4"

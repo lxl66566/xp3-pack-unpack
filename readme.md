@@ -1,12 +1,12 @@
 # xp3-audio-speedup
 
-批量加速 XP3 文件中的 .ogg 音频文件。一般用于 galgame 语音。
-
-该程序也可以用于非 XP3 格式，只需要手动解包后，处理音频文件夹，并设置为 nopack 加速后，再手动封包即可。
+自动解包 xp3 格式的视觉小说音频包，进行音频加速，并封包回 xp3 格式。
 
 ## 安装
 
 在 [Releases](https://github.com/lxl66566/xp3-audio-speedup/releases) 页面下载对应平台的可执行文件。（或者使用 cargo-binstall，bpm 等）
+
+如果你用于加速 xp3 音频包，请下载 `xp3-audio-speedup`；如果你只用于批量加速音频，而不需要 xp3 的解封包操作，请下载 `audio-speedup`。
 
 ## 使用
 
@@ -19,6 +19,10 @@ xp3-audio-speedup.exe <input_xp3> --speed <speed> [--nopack]
 - `--nopack` 仅加速，不进行打包
 
 更多使用说明，请使用 `xp3-audio-speedup.exe -h` 查看。
+
+### as library
+
+如果你要在 rust 程序中调用批量 OGG 音频加速，请使用 [`ogg-batch-speedup`](./ogg-batch-speedup/README.zh-CN.md) crate。
 
 ## 注意事项
 
