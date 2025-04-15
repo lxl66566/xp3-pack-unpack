@@ -3,11 +3,11 @@ pub mod log_utils;
 use anyhow::{Context, Result, anyhow};
 use assert2::assert;
 use clap::Parser;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use log_utils::log_init;
 use rayon::prelude::*;
 use std::fs::{self, File};
-use std::io::{BufReader, BufWriter};
+use std::io::{BufReader, BufWriter, Read};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tempfile::TempDir;
@@ -33,26 +33,33 @@ struct Cli {
     /// 仅加速，不进行打包
     #[arg(short, long)]
     nopack: bool,
-
-    /// 指定匹配音频文件的后缀
-    #[arg(long, default_values = ["ogg"])]
-    suffix: Vec<String>,
 }
 
-fn process_audio_files(folder: &Path, speed: f32, suffix: &[String]) -> Result<()> {
+fn process_audio_files(folder: &Path, speed: f32) -> Result<()> {
     // 首先收集所有需要处理的文件路径
     let files: Vec<_> = WalkDir::new(folder)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| {
-            let ext = e.path().extension().and_then(|ext| ext.to_str());
-            suffix.iter().any(|s| ext == Some(s))
-        })
         .collect();
 
     // 并行处理所有文件
     files.par_iter().try_for_each(|entry| {
         let path = entry.path();
+        if !path.is_file() {
+            return Ok(());
+        }
+        // 检查文件头是否为 OGG 文件
+        let mut file = File::open(path)?;
+        let mut header = [0u8; 4];
+        if let Err(e) = file.read_exact(&mut header) {
+            warn!("读取文件头时出错: {}", e);
+            return Ok(());
+        }
+        if &header != b"OggS" {
+            debug!("跳过非 ogg 文件: {}", path.display());
+            return Ok(());
+        }
+
         let output_file = path.with_file_name(format!(
             "temp_{}",
             path.file_name().unwrap().to_str().unwrap()
@@ -88,7 +95,7 @@ fn process_audio_files(folder: &Path, speed: f32, suffix: &[String]) -> Result<(
 }
 
 /// 处理 XP3 文件（或包含音频文件的文件夹）
-fn process_xp3(input_path: &Path, speed: f32, no_pack: bool, suffix: &[String]) -> Result<()> {
+fn process_xp3(input_path: &Path, speed: f32, no_pack: bool) -> Result<()> {
     info!("正在处理: {}", input_path.display());
 
     let temp_dir = TempDir::new()?;
@@ -129,7 +136,7 @@ fn process_xp3(input_path: &Path, speed: f32, no_pack: bool, suffix: &[String]) 
 
     // 处理音频文件
     info!("正在处理音频文件...");
-    process_audio_files(which_dir, speed, suffix)?;
+    process_audio_files(which_dir, speed)?;
 
     if no_pack {
         info!("音频处理完成，未进行打包");
@@ -215,13 +222,7 @@ fn main() -> Result<()> {
 
     log_init();
 
-    process_xp3(
-        Path::new(&args.input),
-        args.speed,
-        args.nopack,
-        &args.suffix,
-    )
-    .unwrap_or_else(|e| {
+    process_xp3(Path::new(&args.input), args.speed, args.nopack).unwrap_or_else(|e| {
         error!("处理 XP3 文件时出错: {:?}", e);
     });
 

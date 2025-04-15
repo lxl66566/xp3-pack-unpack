@@ -18,11 +18,10 @@ xp3-audio-speedup.exe <input_xp3> --speed <speed> [--nopack]
 - `--speed` 音频加速倍数
 - `--nopack` 仅加速，不进行打包
 
-如果需要匹配非 `.ogg` 的音频文件后缀，请使用 `--suffix <suffix>` 选项。
-
 更多使用说明，请使用 `xp3-audio-speedup.exe -h` 查看。
 
 ## 注意事项
 
 - 需要安装 ffmpeg 并且配置好环境变量。本程序支持 ffmpeg 并行加速，充分利用 CPU。
+- 本程序会加速所有被认为是 ogg 音频的文件，无论其后缀是什么。
 - XP3 必须是未加密的。
