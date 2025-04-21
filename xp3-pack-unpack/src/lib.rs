@@ -91,10 +91,7 @@ pub fn pack_xp3(input_dir: impl AsRef<Path>, output_file: Option<PathBuf>) -> Re
     let input_dir = input_dir.as_ref();
     info!("正在打包: {}", input_dir.display());
 
-    let out_path = output_file.unwrap_or_else(|| {
-        let dir_name = input_dir.file_name().unwrap_or_default();
-        PathBuf::from(dir_name).with_extension("xp3")
-    });
+    let out_path = output_file.unwrap_or_else(|| input_dir.with_extension("xp3"));
 
     let out = File::create(&out_path)?;
     let mut writer = XP3Writer::start(
