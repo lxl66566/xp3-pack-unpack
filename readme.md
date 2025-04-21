@@ -1,26 +1,22 @@
 # xp3-audio-speedup
 
-自动解包 xp3 格式的视觉小说音频包，进行音频加速，并封包回 xp3 格式。
+提供了一套音频加速和 xp3 解封包的工具。
 
 ## 安装
 
 在 [Releases](https://github.com/lxl66566/xp3-audio-speedup/releases) 页面下载对应平台的可执行文件。（或者使用 cargo-binstall，bpm 等）
 
-如果你用于加速 xp3 音频包，请下载 `xp3-audio-speedup`；如果你只用于批量加速音频，而不需要 xp3 的解封包操作，请下载 `audio-speedup`。
+- 如果你用于加速 xp3 音频，请下载 `xp3-audio-speedup`；
+- 如果你只用于批量加速音频，而不需要 xp3 的解封包操作，请下载 `audio-speedup`；
+- 如果你只用于解封包 xp3 文件，而不需要加速音频，请下载 `xp3-pack-unpack`。
 
 ## 使用
 
+下载对应程序后在命令行使用 `-h` 查看帮助，例如
+
 ```sh
-xp3-audio-speedup.exe <input_xp3> [--speed <speed>] [--nopack]
+xp3-audio-speedup -h
 ```
-
-- `input_xp3` XP3 文件路径或包含音频文件的文件夹路径。如果输入是 xp3 文件，则会进行解包。
-- `--speed` 音频加速倍数
-- `--nopack` 仅加速，不进行打包
-
-更多使用说明，请使用 `xp3-audio-speedup.exe -h` 查看。
-
-如果你只需要解包 xp3 文件而不进行加速，请不要指定 `--speed`。
 
 ### as library
 

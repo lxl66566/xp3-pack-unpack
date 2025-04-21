@@ -1,5 +1,5 @@
 [workspace]
-members  = ["ogg-batch-speedup", "audio-speedup", "xp3-audio-speedup"]
+members  = ["ogg-batch-speedup", "audio-speedup", "xp3-audio-speedup", "xp3-pack-unpack"]
 resolver = "2"
 
 [profile.release]

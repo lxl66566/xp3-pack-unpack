@@ -635,7 +635,18 @@ dependencies = [
  "log",
  "ogg-batch-speedup",
  "pretty_env_logger",
- "walkdir",
+ "xp3-pack-unpack",
+]
+
+[[package]]
+name = "xp3-pack-unpack"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert2",
+ "clap",
+ "log",
+ "pretty_env_logger",
  "xp3",
 ]
 

@@ -16,13 +16,20 @@ jobs:
       - name: release xp3-audio-speedup
         uses: lxl66566/rust-simple-release@v0.2.5
         with:
-          targets: aarch64-unknown-linux-gnu, aarch64-unknown-linux-musl, x86_64-pc-windows-msvc, x86_64-unknown-linux-musl, x86_64-unknown-linux-gnu, aarch64-apple-darwin, x86_64-apple-darwin
+          targets: aarch64-unknown-linux-musl, x86_64-pc-windows-msvc, x86_64-unknown-linux-musl, aarch64-apple-darwin, x86_64-apple-darwin
           package: xp3-audio-speedup
           token: ${{ secrets.GH_TOKEN }}
 
       - name: release audio-speedup
         uses: lxl66566/rust-simple-release@v0.2.5
         with:
-          targets: aarch64-unknown-linux-gnu, aarch64-unknown-linux-musl, x86_64-pc-windows-msvc, x86_64-unknown-linux-musl, x86_64-unknown-linux-gnu, aarch64-apple-darwin, x86_64-apple-darwin
+          targets: aarch64-unknown-linux-musl, x86_64-pc-windows-msvc, x86_64-unknown-linux-musl, aarch64-apple-darwin, x86_64-apple-darwin
           package: audio-speedup
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: release xp3-pack-unpack
+        uses: lxl66566/rust-simple-release@v0.2.5
+        with:
+          targets: aarch64-unknown-linux-musl, x86_64-pc-windows-msvc, x86_64-unknown-linux-musl, aarch64-apple-darwin, x86_64-apple-darwin
+          package: xp3-pack-unpack
           token: ${{ secrets.GH_TOKEN }}
