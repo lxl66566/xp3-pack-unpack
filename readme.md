@@ -11,7 +11,7 @@
 ## 使用
 
 ```sh
-xp3-audio-speedup.exe <input_xp3> --speed <speed> [--nopack]
+xp3-audio-speedup.exe <input_xp3> [--speed <speed>] [--nopack]
 ```
 
 - `input_xp3` XP3 文件路径或包含音频文件的文件夹路径。如果输入是 xp3 文件，则会进行解包。
@@ -19,6 +19,8 @@ xp3-audio-speedup.exe <input_xp3> --speed <speed> [--nopack]
 - `--nopack` 仅加速，不进行打包
 
 更多使用说明，请使用 `xp3-audio-speedup.exe -h` 查看。
+
+如果你只需要解包 xp3 文件而不进行加速，请不要指定 `--speed`。
 
 ### as library
 

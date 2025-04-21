@@ -1,11 +1,10 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use assert2::assert;
 use clap::Parser;
-use log::{debug, error, info, LevelFilter};
+use log::{LevelFilter, debug, error, info};
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter};
 use std::path::{Path, PathBuf};
-use tempfile::TempDir;
 use xp3::{
     header::XP3HeaderVersion,
     index::file::{IndexInfoFlag, IndexSegmentFlag},
@@ -20,11 +19,11 @@ struct Cli {
     /// XP3 文件的路径，或包含音频文件的文件夹路径
     input: PathBuf,
 
-    /// 音频加速倍率
-    #[arg(short, long)]
+    /// 音频加速倍率；设为 1 或未给出则仅进行解包，不加速。
+    #[arg(short, long, default_value = "1")]
     speed: f32,
 
-    /// 仅加速，不进行打包
+    /// 加速后不进行打包
     #[arg(short, long)]
     nopack: bool,
 }
@@ -72,21 +71,20 @@ fn add_all_file<T: std::io::Write + std::io::Seek>(
 }
 
 /// 处理 XP3 文件（或包含音频文件的文件夹）
-fn process_xp3(input_path: &Path, speed: f32, no_pack: bool) -> Result<()> {
+fn process_xp3(input_path: PathBuf, speed: f32, no_pack: bool) -> Result<()> {
     info!("正在处理: {}", input_path.display());
-
-    let temp_dir = TempDir::new()?;
-    let temp_path = temp_dir.path();
 
     // 如果输入是文件夹，则直接使用该文件夹，否则解包 XP3
     let which_dir = if input_path.is_dir() {
-        input_path
+        input_path.clone()
     } else {
+        let temp_path = input_path.with_extension("");
+
         // 解包 XP3
         info!("正在解包...");
-        let input_xp3 = File::open(input_path)?;
+        let input_xp3 = File::open(&input_path)?;
         let archive = XP3Reader::open_archive(BufReader::new(input_xp3)).unwrap_or_else(|e| {
-            panic!("打开 {} 时出错: {:?}", input_path.display(), e);
+            panic!("打开 {} 时出错: {:?}", &input_path.display(), e);
         });
 
         for (name, _) in archive.entries() {
@@ -113,7 +111,14 @@ fn process_xp3(input_path: &Path, speed: f32, no_pack: bool) -> Result<()> {
 
     // 处理音频文件
     info!("正在处理音频文件...");
-    ogg_batch_speedup::process_audio_files(which_dir, speed)?;
+    if speed <= 0.0 {
+        return Err(anyhow!("加速倍率必须大于 0"));
+    }
+    if speed == 1.0 {
+        info!("加速倍率等于 1，不进行处理");
+    } else {
+        ogg_batch_speedup::process_audio_files(&which_dir, speed)?;
+    }
 
     if no_pack {
         info!("音频处理完成，未进行打包");
@@ -121,10 +126,10 @@ fn process_xp3(input_path: &Path, speed: f32, no_pack: bool) -> Result<()> {
     }
 
     // 备份原文件
-    if input_path.is_file() {
+    if input_path.as_path().is_file() {
         let backup_path = input_path.with_extension("xp3.bak");
         info!("备份原文件到: {}", backup_path.display());
-        std::fs::rename(input_path, &backup_path)?;
+        std::fs::rename(&input_path, &backup_path)?;
     }
 
     // 重新打包
@@ -141,7 +146,7 @@ fn process_xp3(input_path: &Path, speed: f32, no_pack: bool) -> Result<()> {
     )
     .unwrap_or_else(|e| panic!("创建 XP3 写入器时出错: {:?}", e));
 
-    let count = add_all_file(&mut writer, which_dir, which_dir)?;
+    let count = add_all_file(&mut writer, &which_dir, &which_dir)?;
     writer
         .finish()
         .unwrap_or_else(|e| panic!("完成打包时出错: {:?}", e));
@@ -161,7 +166,7 @@ fn main() -> Result<()> {
         .parse_default_env()
         .try_init();
 
-    process_xp3(Path::new(&args.input), args.speed, args.nopack).unwrap_or_else(|e| {
+    process_xp3(PathBuf::from(&args.input), args.speed, args.nopack).unwrap_or_else(|e| {
         error!("处理 XP3 文件时出错: {:?}", e);
     });
 
