@@ -9,7 +9,7 @@ assert2           = "0.4"
 clap              = { version = "4.6", features = ["derive"] }
 log               = "0.4"
 pretty_env_logger = "0.5"
-xp3               = "0.3"
+xp3               = "0.4"
 
 [profile.release]
 lto       = true
